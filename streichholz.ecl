@@ -1,6 +1,32 @@
 % -*- prolog -*-
 :- lib(ic).
 
+
+setStartEnd(XStartPos, XEndPos, YStartPos, YEndPos, Richtung, NMinusOne) :-
+        NMinusOne=[XStartPos1, XEndPos1, YStartPos1, YEndPos1, Richtung1],
+        XStartPos #= XStartPos1 + 1
+%	writeln(NMinusOne)
+	.
+
+generateVarConstraints(1, [Z]) :-
+	XStartPos :: -10000..10000,
+	XEndPos   :: -10000..10000,
+	YStartPos :: -10000..10000,
+	YEndPos   :: -10000..10000,
+	Richtung  :: 0..3,
+	Z = [XStartPos, XEndPos, YStartPos, YEndPos, Richtung].
+
+generateVarConstraints(N, [Z | [X | Results]]) :-
+	XStartPos :: -10000..10000,
+	XEndPos   :: -10000..10000,
+	YStartPos :: -10000..10000,
+	YEndPos   :: -10000..10000,
+	Richtung  :: 0..3,
+	Z = [XStartPos, XEndPos, YStartPos, YEndPos, Richtung],
+	F is N - 1,
+	setStartEnd(XStartPos, XEndPos, YStartPos, YEndPos, Richtung, X),
+	generateVarConstraints(F, [X | Results]).
+
 setVarConstraints :-
 	XStartPos0 #= 0,
 	YStartPos0 #= 0,
