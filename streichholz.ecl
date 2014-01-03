@@ -4,28 +4,53 @@
 
 setStartEnd(XStartPos, XEndPos, YStartPos, YEndPos, Richtung, NMinusOne) :-
         NMinusOne=[XStartPos1, XEndPos1, YStartPos1, YEndPos1, Richtung1],
-        XStartPos #= XStartPos1 + 1
+        XStartPos #= XEndPos1,
+        YStartPos #= YEndPos1,
+        XStartPos #= XEndPos1,
+        XStartPos #= XEndPos1,
+
+        Richtung1 #= 0 => Richtung #\= 2,
+        Richtung1 #= 1 => Richtung #\= 3,
+        Richtung1 #= 2 => Richtung #\= 0,
+        Richtung1 #= 3 => Richtung #\= 1
+
 %	writeln(NMinusOne)
 	.
 
-generateVarConstraints(1, [Z]) :-
-	XStartPos :: -10000..10000,
+setStartEnd2(A, B) :- 
+	A = [XS1, XE1, YS1, YE1, Ri],
+	setStartEnd(XS1, XE1, YS1, YE1, Ri, B).
+
+generateVarConstraints(1, [Z], Z, Z) :-
+	XStartPos #= 0,
 	XEndPos   :: -10000..10000,
-	YStartPos :: -10000..10000,
+	YStartPos #= 0,
 	YEndPos   :: -10000..10000,
 	Richtung  :: 0..3,
+	or(or(and(Richtung #= 0, XEndPos #= XStartPos + 1), and(Richtung #= 1, XEndPos #= XStartPos)), or(and(Richtung #= 2, XEndPos #= XStartPos - 1), and(Richtung #= 3, XEndPos #= XStartPos))), 
+	or(or(and(Richtung #= 0, YEndPos #= YStartPos), and(Richtung #= 1, YEndPos #= YStartPos + 1)), or(and(Richtung #= 2, YEndPos #= YStartPos), and(Richtung #= 3, YEndPos #= YStartPos - 1))), 
 	Z = [XStartPos, XEndPos, YStartPos, YEndPos, Richtung].
 
-generateVarConstraints(N, [Z | [X | Results]]) :-
+generateVarConstraints(N, [Z | [X | Results]], Last, Z) :-
 	XStartPos :: -10000..10000,
 	XEndPos   :: -10000..10000,
 	YStartPos :: -10000..10000,
 	YEndPos   :: -10000..10000,
 	Richtung  :: 0..3,
+	or(or(and(Richtung #= 0, XEndPos #= XStartPos + 1), and(Richtung #= 1, XEndPos #= XStartPos)), or(and(Richtung #= 2, XEndPos #= XStartPos - 1), and(Richtung #= 3, XEndPos #= XStartPos))), 
+	or(or(and(Richtung #= 0, YEndPos #= YStartPos), and(Richtung #= 1, YEndPos #= YStartPos + 1)), or(and(Richtung #= 2, YEndPos #= YStartPos), and(Richtung #= 3, YEndPos #= YStartPos - 1))), 
 	Z = [XStartPos, XEndPos, YStartPos, YEndPos, Richtung],
 	F is N - 1,
 	setStartEnd(XStartPos, XEndPos, YStartPos, YEndPos, Richtung, X),
-	generateVarConstraints(F, [X | Results]).
+	generateVarConstraints(F, [X | Results], Last, _).
+
+run(N) :- 
+	generateVarConstraints(N, ResultSet, Last, First),
+	setStartEnd2(Last, First),
+	flatten(ResultSet, VarSet),
+	search(VarSet, 0, input_order, indomain, complete, []),
+	writeln(ResultSet)
+	.
 
 setVarConstraints :-
 	XStartPos0 #= 0,
