@@ -1,6 +1,119 @@
 % -*- prolog -*-
 :- lib(ic).
 
+% (C) 2014, Andreas Petter and Björn Höfling
+% Licence: TBD
+%
+% Idea: Lay out matches on the floor in a rectangled grid. 
+% Given n matches, how many figures can you draw?
+%
+% n=4:
+%     +--+
+%     |  |
+%     0->+
+%
+% n=6:
+%     +--+--+
+%     |     |
+%     0--+--+
+%
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% define a struct that represets a match (as in match-box) positioned on the floor.
+:- local struct( match(xstart, ystart, xend, yend, direction)).
+
+% Set constraint betweeten matches M0 and M1: 
+% End coordinates of M0 shall be the same as start coordinates of M1,
+% i.e. M1 "follows" M0.
+% 
+% Furthermore, the direction of Match1 must not be the opposite of Match0
+%
+setStartEndNew(M1, M0) :-
+	M0 = match(_      , _      , XEnd0, Yend0, Direction0),
+	M1 = match(XStart1, YStart1, _    , _    , Direction1),
+
+	XStart1 #= XEnd0,
+	YStart1 #= YEnd0,
+        Direction0 #= 0 => Direction1 #\= 2,
+        Direction0 #= 1 => Direction1 #\= 3,
+        Direction0 #= 2 => Direction1 #\= 0,
+        Direction0 #= 3 => Direction1 #\= 1.
+
+
+generateVarConstraintsNew(1, [Z], Z, Z) :-
+	writeln("generateVarConstraintsNew"),
+	writeln(Z),
+	Z=match(XStartPos, YStartPos, XEndPos, YEndPos, Direction),
+	XStartPos #= 0,
+	YStartPos #= 0,
+	XEndPos   :: -1..1, %-10000..10000,
+	YEndPos   :: -1..1, %-10000..10000,
+	Direction  :: 0..3,
+	Direction #= 0 => XEndPos #= XStartPos + 1,
+	Direction #= 1 => XEndPos #= XStartPos,
+	Direction #= 2 => XEndPos #= XStartPos - 1,
+	Direction #= 3 => XEndPos #= XStartPos,
+
+	Direction #= 0 => YEndPos #= YStartPos,
+	Direction #= 1 => YEndPos #= YStartPos + 1,
+	Direction #= 2 => YEndPos #= YStartPos,
+	Direction #= 3 => YEndPos #= YStartPos - 1,
+	nl
+	.
+
+generateVarConstraintsNew(N, [Z | [X | Results]], Last, First) :-
+	Z = First,
+	Z=match(XStartPos, YStartPos, XEndPos, YEndPos, Direction),
+	XStartPos :: -10000..10000,
+	YStartPos :: -10000..10000,
+	XEndPos   :: -10000..10000,
+	YEndPos   :: -10000..10000,
+	Direction :: 0..3,
+
+	Direction #= 0 => XEndPos #= XStartPos + 1,
+	Direction #= 1 => XEndPos #= XStartPos,
+	Direction #= 2 => XEndPos #= XStartPos - 1,
+	Direction #= 3 => XEndPos #= XStartPos,
+
+	Direction #= 0 => YEndPos #= YStartPos,
+	Direction #= 1 => YEndPos #= YStartPos + 1,
+	Direction #= 2 => YEndPos #= YStartPos,
+	Direction #= 3 => YEndPos #= YStartPos - 1,
+
+	%setStartEndNew(First,Last),
+	Npred is N - 1,
+	setStartEndNew(Z, X),
+	generateVarConstraintsNew(Npred, [X | Results], Last, _).
+
+
+%runNew(N) :-
+doit(N) :- 
+	%%M=match{xstart:0, ystart:0, xend:1, yend:0, direction:0},
+	%%generateVarConstraintsNew(1, [M], M, M)
+	generateVarConstraintsNew(N, ResultSet, Last, First),
+	%setStartEndNew(Last, First),
+	flatten(ResultSet, VarSet),
+	writeln("Resultset:"),
+	writeln(ResultSet),
+	writeln("VarSet:"),
+	writeln(VarSet),
+
+	term_variables(VarSet, Vars),
+	writeln("Vars:"),
+	writeln(Vars),
+	labeling(Vars),
+	%%search(Vars, 0, input_order, indomain, complete, []),
+	writeln(ResultSet)
+	.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% BELOW THIS LINE: OLD IMPLEMENTATION.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 setStartEnd(XStartPos, XEndPos, YStartPos, YEndPos, Richtung, NMinusOne) :-
         NMinusOne=[XStartPos1, XEndPos1, YStartPos1, YEndPos1, Richtung1],
